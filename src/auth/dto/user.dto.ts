@@ -5,8 +5,9 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { OmitType } from '@nestjs/mapped-types';
 
-export class CreateUserDto {
+export class SignupDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
@@ -23,3 +24,5 @@ export class CreateUserDto {
   @MaxLength(30)
   password: string;
 }
+
+export class LoginDto extends OmitType(SignupDto, ['username'] as const) {}
