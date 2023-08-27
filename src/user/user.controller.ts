@@ -5,9 +5,4 @@ import { SignupDto } from '../auth/dto/user.dto';
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
-
-  @Post()
-  createUser(@Body() payload: SignupDto) {
-    return this.userService.createUser(payload);
-  }
 }
