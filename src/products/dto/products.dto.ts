@@ -1,4 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
+import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class ProductsDto {
@@ -9,15 +10,18 @@ export class ProductsDto {
   description: string;
 
   @IsNumber()
+  @Transform(({ value }) => parseFloat(value))
   price: number;
 
   @IsNumber()
+  @Transform(({ value }) => parseFloat(value))
   quantity: number;
 
   @IsString()
   categoryId: never;
 
   @IsString()
+  // @IsOptional()
   image: string;
 }
 
