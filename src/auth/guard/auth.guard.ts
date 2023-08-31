@@ -10,7 +10,7 @@ import { Request } from 'express';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService, private config: ConfigService) {}
+  constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest<Request>();

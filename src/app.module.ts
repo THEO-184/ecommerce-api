@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ProductsModule } from './products/products.module';
     PrismaModule,
     AuthModule,
     ProductsModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService],

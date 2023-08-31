@@ -30,6 +30,11 @@ export class ProductsService {
 
   async getAllProducts(s3: S3Client) {
     const products = await this.prisma.product.findMany({
+      where: {
+        quantity: {
+          gte: 1,
+        },
+      },
       include: {
         cartegory: {
           select: {
