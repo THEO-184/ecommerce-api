@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -20,6 +21,14 @@ export class CartController {
   @Get()
   getCartItems(@GetUser('sub') id: string) {
     return this.cartService.getCartItems(id);
+  }
+
+  @Delete('item/:id')
+  deleteCartItem(
+    @Param('id') cartItemId: string,
+    @GetUser('sub') userId: string,
+  ) {
+    return this.cartService.deleteCartItem(cartItemId, userId);
   }
 
   @Post()

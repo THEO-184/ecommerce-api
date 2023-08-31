@@ -94,6 +94,11 @@ export class CartService {
         userId,
       },
       include: {
+        _count: {
+          select: {
+            cartItems: true,
+          },
+        },
         cartItems: {
           select: {
             id: true,
@@ -109,5 +114,18 @@ export class CartService {
     });
 
     return { data: cart };
+  }
+
+  async deleteCartItem(cartItemId: string, userId: string) {
+    await this.prisma.shoppingCartItem.delete({
+      where: {
+        cart: {
+          userId,
+        },
+        id: cartItemId,
+      },
+    });
+
+    return { message: 'item successfully deleted from cart' };
   }
 }
