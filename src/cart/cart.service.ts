@@ -46,7 +46,7 @@ export class CartService {
         },
       });
 
-      return { updatedCartItem, message: 'cart successfully updated' };
+      return { message: 'cart successfully updated' };
     }
 
     const cartItem = await this.prisma.shoppingCartItem.create({
@@ -81,6 +81,6 @@ export class CartService {
       },
     });
 
-    return { data: cartItem, message: 'cart successfully created' };
+    return { message: 'cart successfully created' };
   }
 }
