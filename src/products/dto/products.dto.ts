@@ -21,7 +21,6 @@ export class ProductsDto {
   categoryId: never;
 
   @IsString()
-  // @IsOptional()
   image: string;
 }
 
