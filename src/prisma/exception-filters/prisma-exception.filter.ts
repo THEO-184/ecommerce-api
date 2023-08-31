@@ -25,7 +25,7 @@ export class PrismaClientExceptionFilter extends BaseExceptionFilter {
 
       case 'P2025': {
         res.status(HttpStatus.NOT_FOUND).json({
-          message: exception.message,
+          message: exception.meta?.cause,
           statusCode: HttpStatus.NOT_FOUND,
         });
         break;

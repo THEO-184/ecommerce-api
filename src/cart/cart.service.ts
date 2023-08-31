@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CartItemDto } from './dto/cart.dto';
 
@@ -25,15 +25,19 @@ export class CartService {
       },
     });
 
+    if (payload.quantity > existingCartItem.quantity) {
+      throw new BadRequestException(
+        'insufficient products for the requested quantity to be added to cart',
+      );
+    }
+
     if (existingCartItem) {
       const updatedCartItem = await this.prisma.shoppingCartItem.update({
         where: {
           id: existingCartItem.id,
         },
         data: {
-          quantity: {
-            increment: payload.quantity,
-          },
+          quantity: existingCartItem.quantity + payload.quantity,
         },
         include: {
           product: {
