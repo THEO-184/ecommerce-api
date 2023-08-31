@@ -7,49 +7,6 @@ export class CartService {
   constructor(private prisma: PrismaService) {}
 
   async addToCart(payload: CartItemDto, userId: string) {
-    // const cart = await this.prisma.cart.upsert({
-    //   where: {
-    //     userId: userId,
-    //   },
-
-    //   create: {
-    //     user: {
-    //       connect: { id: userId },
-    //     },
-    //     cartItems: {
-    //       create: [
-    //         {
-    //           quantity: payload.quantity,
-    //           product: {
-    //             connect: { id: payload.productId },
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   },
-    //   update: {
-    //     cartItems: {
-    //       create: [
-    //         {
-    //           quantity: payload.quantity,
-    //           product: {
-    //             connect: { id: payload.productId },
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   },
-    //   select: {
-    //     _count: {
-    //       select: {
-    //         cartItems: true,
-    //       },
-    //     },
-    //     cartItems: true,
-    //     user: true,
-    //   },
-    // });
-
     const existingCartItem = await this.prisma.shoppingCartItem.findFirst({
       where: {
         cart: {
@@ -125,7 +82,5 @@ export class CartService {
     });
 
     return { data: cartItem, message: 'cart successfully created' };
-
-    // return cart;
   }
 }
