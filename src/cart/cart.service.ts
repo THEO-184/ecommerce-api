@@ -81,6 +81,29 @@ export class CartService {
       },
     });
 
-    return { message: 'cart successfully created' };
+    return { data: cartItem, message: 'cart successfully created' };
+  }
+
+  async getCartItems(userId: string) {
+    const cart = await this.prisma.cart.findUnique({
+      where: {
+        userId,
+      },
+      include: {
+        cartItems: {
+          select: {
+            id: true,
+            quantity: true,
+            product: {
+              include: {
+                reviews: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return { data: cart };
   }
 }
