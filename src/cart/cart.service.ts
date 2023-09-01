@@ -32,7 +32,7 @@ export class CartService {
     }
 
     if (existingCartItem) {
-      const updatedCartItem = await this.prisma.shoppingCartItem.update({
+      await this.prisma.shoppingCartItem.update({
         where: {
           id: existingCartItem.id,
         },
