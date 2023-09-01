@@ -17,6 +17,7 @@ model User {
   username String @db.VarChar(50)
   reviews Review[]
   cart Cart?
+  orders Order[]
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
@@ -56,12 +57,12 @@ model Cart {
   id String @id @default(uuid())
   user User @relation(fields: [userId], references: [id])
   userId String @unique
- cartItems ShoppingCartItem[]
+ cartItems ShoppingCartItem[] @relation("cartItems")
 }
 
 model ShoppingCartItem {
   id String @id @default(uuid())
-  cart Cart @relation(fields: [cartId], references: [id])
+  cart Cart @relation("cartItems",fields: [cartId], references: [id], onDelete: Cascade)
   cartId String
   quantity Int
   product Product @relation("productCartItems" ,fields: [productId], references: [id], onDelete: Cascade)
@@ -70,8 +71,32 @@ model ShoppingCartItem {
   @@unique([cartId, productId])
 }
 
+
+model Order{
+  id String @id @default(uuid())
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  orderItems OrderItem?
+}
+
+
+model OrderItem {
+  id String @id @default(uuid())
+  total Float @db.DoublePrecision()
+  order Order @relation(fields: [orderId], references: [id])
+  orderId String @unique
+  status OrderStatus @default(pending)
+}
+
+
 enum CategoryEnum {
   jewelery
   electronics
   clothing
+}
+
+enum OrderStatus {
+  pending
+  delivered
+  cancelled
 }
