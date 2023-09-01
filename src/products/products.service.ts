@@ -92,7 +92,6 @@ export class ProductsService {
         id,
       },
     });
-
     return { message: 'product successfully deleted' };
   }
 
