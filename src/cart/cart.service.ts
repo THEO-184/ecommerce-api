@@ -25,7 +25,7 @@ export class CartService {
       },
     });
 
-    if (payload.quantity > existingCartItem.quantity) {
+    if (payload.quantity > existingCartItem.product.quantity) {
       throw new BadRequestException(
         'insufficient products for the requested quantity to be added to cart',
       );
