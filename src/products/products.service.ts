@@ -70,6 +70,26 @@ export class ProductsService {
       where: {
         id: id,
       },
+      include: {
+        cartegory: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        reviews: {
+          select: {
+            id: true,
+            description: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return product;
