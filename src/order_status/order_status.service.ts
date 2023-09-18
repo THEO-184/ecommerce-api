@@ -16,4 +16,16 @@ export class OrderStatusService {
     });
     return { message: 'order successfully created', orderStatus };
   }
+
+  async getOrderStatus() {
+    const orderStatus = await this.prisma.orderStatus.findMany({
+      select: {
+        id: true,
+        description: true,
+        title: true,
+      },
+    });
+
+    return { count: orderStatus.length, orderStatus };
+  }
 }
