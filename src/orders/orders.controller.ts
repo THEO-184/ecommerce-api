@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   UseGuards,
@@ -15,6 +16,11 @@ import GetUser from 'src/auth/decorators/user.decorator';
 @Controller('orders')
 export class OrdersController {
   constructor(private orderService: OrdersService) {}
+
+  @Get()
+  getOrder(@GetUser('sub') userId: string) {
+    return this.orderService.getOrder(userId);
+  }
 
   @Post()
   createOrder(@GetUser('sub') userId: string) {

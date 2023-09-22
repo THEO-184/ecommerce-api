@@ -58,6 +58,38 @@ export class OrdersService {
     return { message: 'order deleted successfully' };
   }
 
+  async getOrder(userId: string) {
+    const order = await this.prisma.order.findFirstOrThrow({
+      where: {
+        userId: userId,
+      },
+
+      include: {
+        orderItem: {
+          select: {
+            id: true,
+            total: true,
+            items: {
+              select: {
+                quantity: true,
+                product: {
+                  select: {
+                    id: true,
+                    price: true,
+                    title: true,
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return { data: order };
+  }
+
   async getOrderDetails(userId: string) {
     const cart = await this.cartService.getUserCart(userId);
 
