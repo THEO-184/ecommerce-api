@@ -25,7 +25,7 @@ export class CartService {
       },
     });
 
-    if (payload.quantity > existingCartItem.product.quantity) {
+    if (payload.quantity > existingCartItem?.product?.quantity) {
       throw new BadRequestException(
         'insufficient products for the requested quantity to be added to cart',
       );
@@ -37,7 +37,7 @@ export class CartService {
           id: existingCartItem.id,
         },
         data: {
-          quantity: existingCartItem.quantity + payload.quantity,
+          quantity: payload.quantity,
         },
         include: {
           product: {
@@ -127,5 +127,35 @@ export class CartService {
     });
 
     return { message: 'item successfully deleted from cart' };
+  }
+
+  async getUserCart(userId: string) {
+    const cart = await this.prisma.cart.findUnique({
+      where: {
+        userId,
+      },
+      include: {
+        _count: {
+          select: {
+            cartItems: true,
+          },
+        },
+        cartItems: {
+          select: {
+            id: true,
+
+            quantity: true,
+            product: {
+              select: {
+                id: true,
+                price: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return cart;
   }
 }

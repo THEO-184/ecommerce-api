@@ -76,7 +76,7 @@ model ShoppingCartItem {
 model Order{
   id String @id @default(uuid())
   user User @relation(fields: [userId], references: [id])
-  userId String @unique()
+  userId String 
   orderItem OrderItem? @relation("OrderItems")
 }
 
@@ -94,7 +94,7 @@ model OrderItem {
 
 model OrderStatus {
   id String @id @default(uuid())
-  title OrderStatusEnum @default(pending)
+  title OrderStatusEnum @unique @default(pending)
   description String
   orderItems OrderItem[]
 }
