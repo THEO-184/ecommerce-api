@@ -65,6 +65,7 @@ model ShoppingCartItem {
   cart Cart @relation("cartItems",fields: [cartId], references: [id], onDelete: Cascade)
   cartId String
   quantity Int
+  price Float @db.DoublePrecision()
   product Product @relation("productCartItems" ,fields: [productId], references: [id], onDelete: Cascade)
   productId String
   order OrderItem? @relation(fields: [orderId], references: [id])
