@@ -163,14 +163,9 @@ export class CartService {
         cartItems: {
           select: {
             id: true,
-
+            price: true,
+            productId: true,
             quantity: true,
-            product: {
-              select: {
-                id: true,
-                price: true,
-              },
-            },
           },
         },
       },

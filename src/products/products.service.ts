@@ -35,6 +35,7 @@ export class ProductsService {
           gte: 1,
         },
       },
+
       include: {
         cartegory: {
           select: {
@@ -42,6 +43,7 @@ export class ProductsService {
             title: true,
           },
         },
+        reviews: true,
       },
     });
 
@@ -66,7 +68,7 @@ export class ProductsService {
   }
 
   async getProduct(id: string) {
-    const product = await this.prisma.product.findUniqueOrThrow({
+    const product = await this.prisma.product.findUnique({
       where: {
         id: id,
       },
