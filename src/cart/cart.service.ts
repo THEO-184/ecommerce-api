@@ -1,33 +1,24 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CartItemDto } from './dto/cart.dto';
+import { ProductsService } from 'src/products/products.service';
 
 @Injectable()
 export class CartService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private productService: ProductsService,
+  ) {}
 
   async addToCart(payload: CartItemDto, userId: string) {
-    const existingCartItem = await this.prisma.shoppingCartItem.findFirst({
-      where: {
-        cart: {
-          userId,
-        },
-        productId: payload.productId,
-      },
-      include: {
-        product: {
-          select: {
-            id: true,
-            title: true,
-            quantity: true,
-          },
-        },
-      },
-    });
+    const existingCartItem = await this.checkIsItemInCart(
+      payload.productId,
+      userId,
+    );
 
     if (payload.quantity > existingCartItem?.product?.quantity) {
       throw new BadRequestException(
-        'insufficient products for the requested quantity to be added to cart',
+        'insufficient products for the requested quantity',
       );
     }
 
@@ -53,9 +44,12 @@ export class CartService {
       return { message: 'cart successfully updated' };
     }
 
+    const product = await this.productService.getProduct(payload.productId);
+
     const cartItem = await this.prisma.shoppingCartItem.create({
       data: {
         quantity: payload.quantity,
+        price: product.price,
         cart: {
           connectOrCreate: {
             where: {
@@ -88,6 +82,29 @@ export class CartService {
     return { data: cartItem, message: 'cart successfully created' };
   }
 
+  async checkIsItemInCart(productId: string, userId: string) {
+    const existingCartItem = await this.prisma.shoppingCartItem.findFirst({
+      where: {
+        cart: {
+          userId,
+        },
+        productId: productId,
+      },
+      include: {
+        product: {
+          select: {
+            id: true,
+            title: true,
+            quantity: true,
+            price: true,
+          },
+        },
+      },
+    });
+
+    return existingCartItem;
+  }
+
   async getCartItems(userId: string) {
     const cart = await this.prisma.cart.findUnique({
       where: {
@@ -103,9 +120,12 @@ export class CartService {
           select: {
             id: true,
             quantity: true,
+            price: true,
             product: {
-              include: {
-                reviews: true,
+              select: {
+                description: true,
+                image: true,
+                title: true,
               },
             },
           },
