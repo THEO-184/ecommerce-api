@@ -1,18 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OrderDto } from './dto/order.dto';
 import { CartService } from 'src/cart/cart.service';
 import { Prisma } from '@prisma/client';
+import { ProductsService } from 'src/products/products.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private prisma: PrismaService,
     private cartService: CartService,
+    private productService: ProductsService,
   ) {}
 
   async createOrder(userId: string) {
-    const { orderedProducts, totalOrderCost } = await this.getOrderDetails(
+    const { orderedProducts, totalOrderCost } = await this.getCartDetails(
       userId,
     );
 
@@ -90,16 +92,27 @@ export class OrdersService {
     return { data: order };
   }
 
-  async getOrderDetails(userId: string) {
+  async getCartDetails(userId: string) {
     const cart = await this.cartService.getUserCart(userId);
 
     let totalOrderCost = 0;
     let orderedProducts: { id: string }[] = [];
 
-    for (const item of cart.cartItems) {
-      const costOfOrderItem = item.quantity * item.product.price;
+    for (const cartItem of cart.cartItems) {
+      const product = await this.productService.getProduct(cartItem.productId);
+
+      if (!product) {
+        throw new NotFoundException('sorry!. product is sold out!!');
+      }
+
+      const updatedProduct = await this.productService.updateProduct(
+        cartItem.productId,
+        { quantity: product.quantity - cartItem.quantity },
+      );
+
+      const costOfOrderItem = cartItem.quantity * cartItem.price;
       totalOrderCost += costOfOrderItem;
-      orderedProducts.push({ id: item.id });
+      orderedProducts.push({ id: cartItem.productId });
     }
 
     return { totalOrderCost, orderedProducts };
