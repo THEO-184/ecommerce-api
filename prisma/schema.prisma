@@ -16,6 +16,7 @@ model User {
   password String 
   username String @db.VarChar(50)
   reviews Review[]
+  telephone String 
   cart Cart?
   orders Order[]
   updatedAt DateTime @updatedAt
@@ -34,6 +35,8 @@ model Product {
   reviews Review[] @relation("productReviews")
   cartItems ShoppingCartItem[] @relation("productCartItems")
   orderProducts OrderProduct[] @relation("OrderProduct")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
 }
 
@@ -41,6 +44,8 @@ model Category {
   id String @id @default(uuid())
   title CategoryEnum @default(clothing) @unique
   products Product[]
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 
@@ -52,6 +57,9 @@ model Review {
   userId String
   product Product @relation("productReviews", fields: [productId], references: [id], onDelete: Cascade)
   productId String
+    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
   @@unique([userId, productId])
 }
 
@@ -60,6 +68,8 @@ model Cart {
   user User @relation(fields: [userId], references: [id])
   userId String @unique
  cartItems ShoppingCartItem[] @relation("cartItems")
+   updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 model ShoppingCartItem {
@@ -70,6 +80,8 @@ model ShoppingCartItem {
   price Float @db.DoublePrecision()
   product Product @relation("productCartItems" ,fields: [productId], references: [id], onDelete: Cascade)
   productId String
+    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
 
   @@unique([cartId, productId])
@@ -82,6 +94,8 @@ model Order{
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String 
   orderItems OrderItem[] @relation("OrderItems")
+    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 model OrderItem {
@@ -92,6 +106,8 @@ model OrderItem {
  status OrderStatus @relation(fields: [statusId], references: [id]) 
  statusId String
   items OrderProduct[]
+    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 model OrderProduct {
@@ -102,6 +118,8 @@ model OrderProduct {
   productId String
   orderItem OrderItem @relation(fields: [orderItemId], references: [id],onDelete: Cascade)
   orderItemId String @default("")
+    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 
@@ -112,6 +130,8 @@ model OrderStatus {
   title OrderStatusEnum @unique @default(pending)
   description String
   orderItems OrderItem[]
+    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 
