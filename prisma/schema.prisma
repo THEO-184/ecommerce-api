@@ -75,16 +75,14 @@ model ShoppingCartItem {
   @@unique([cartId, productId])
 }
 
-model OrderProduct {
-  id String @id @default(uuid())
-  price Float @db.DoublePrecision()
-  quantity Int
-  product Product @relation("OrderProduct", fields: [productId], references: [id])
-  productId String
-  order OrderItem? @relation(references: [orderId], fields: [id], onDelete: Cascade)
-  orderId String
-}
 
+
+model Order{
+  id String @id @default(uuid())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String 
+  orderItems OrderItem[] @relation("OrderItems")
+}
 
 model OrderItem {
   id String @id @default(uuid())
@@ -96,13 +94,17 @@ model OrderItem {
   items OrderProduct[]
 }
 
-
-model Order{
+model OrderProduct {
   id String @id @default(uuid())
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String 
-  orderItems OrderItem[] @relation("OrderItems")
+  price Float @db.DoublePrecision()
+  quantity Int
+  product Product @relation("OrderProduct", fields: [productId], references: [id])
+  productId String
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id],onDelete: Cascade)
+  orderItemId String @default("")
 }
+
+
 
 
 model OrderStatus {

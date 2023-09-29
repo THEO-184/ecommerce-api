@@ -117,6 +117,17 @@ export class ProductsService {
     return { message: 'product successfully deleted' };
   }
 
+  async getProductsByIds(IDs: string[]) {
+    const products = await this.prisma.product.findMany({
+      where: {
+        id: {
+          in: [...IDs],
+        },
+      },
+    });
+    return products;
+  }
+
   async uploadProductImgToS3(
     s3: S3Client,
     file: Express.Multer.File,

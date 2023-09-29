@@ -14,15 +14,22 @@ export class OrdersService {
   ) {}
 
   async createOrder(userId: string) {
-    const { orderedProducts, totalOrderCost } = await this.getCartDetails(
-      userId,
-    );
+    const { orderedProductsDetails, totalOrderCost } =
+      await this.getCartDetails(userId);
+
+    // const orderedProductsIDs = orderedProductsDetails.map((product) => ({
+    //   id: product.productId,
+    // }));
 
     const orderStatus = await this.prisma.orderStatus.findFirstOrThrow({
       where: {
         title: 'pending',
       },
     });
+
+    // const orderProducts = await this.prisma.orderProduct.createMany({
+    //   data:[...orderedProductsDetails]
+    // })
 
     const order = await this.prisma.orderItem.create({
       data: {
@@ -34,7 +41,8 @@ export class OrdersService {
         },
 
         items: {
-          connect: orderedProducts,
+          create: [...orderedProductsDetails],
+          //  create:
         },
 
         order: {
@@ -67,19 +75,28 @@ export class OrdersService {
       },
 
       include: {
-        orderItem: {
+        orderItems: {
           select: {
             id: true,
             total: true,
+            status: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+            _count: true,
             items: {
               select: {
+                id: true,
+                price: true,
                 quantity: true,
                 product: {
                   select: {
                     id: true,
-                    price: true,
-                    title: true,
                     image: true,
+                    title: true,
+                    quantity: true,
                   },
                 },
               },
@@ -94,12 +111,22 @@ export class OrdersService {
 
   async getCartDetails(userId: string) {
     const cart = await this.cartService.getUserCart(userId);
+    const cartItemIds = cart.cartItems.map((cart) => cart.productId);
+    const cartProducts = await this.productService.getProductsByIds(
+      cartItemIds,
+    );
 
     let totalOrderCost = 0;
-    let orderedProducts: { id: string }[] = [];
+    let orderedProductsDetails: {
+      productId: string;
+      price: number;
+      quantity: number;
+    }[] = [];
 
     for (const cartItem of cart.cartItems) {
-      const product = await this.productService.getProduct(cartItem.productId);
+      const product = cartProducts.find(
+        (product) => product.id === cartItem.productId,
+      );
 
       if (!product) {
         throw new NotFoundException('sorry!. product is sold out!!');
@@ -112,9 +139,13 @@ export class OrdersService {
 
       const costOfOrderItem = cartItem.quantity * cartItem.price;
       totalOrderCost += costOfOrderItem;
-      orderedProducts.push({ id: cartItem.productId });
+      orderedProductsDetails.push({
+        productId: cartItem.productId,
+        price: cartItem.price,
+        quantity: cartItem.quantity,
+      });
     }
 
-    return { totalOrderCost, orderedProducts };
+    return { totalOrderCost, orderedProductsDetails };
   }
 }
