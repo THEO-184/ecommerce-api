@@ -33,7 +33,7 @@ model Product {
   categoryId String
   reviews Review[] @relation("productReviews")
   cartItems ShoppingCartItem[] @relation("productCartItems")
-  orders OrderItem[] 
+  orderProducts OrderProduct[] @relation("OrderProduct")
 
 }
 
@@ -75,11 +75,14 @@ model ShoppingCartItem {
   @@unique([cartId, productId])
 }
 
-model Order{
+model OrderProduct {
   id String @id @default(uuid())
-  user User @relation(fields: [userId], references: [id])
-  userId String 
-  orderItem OrderItem? @relation("OrderItems")
+  price Float @db.DoublePrecision()
+  quantity Int
+  product Product @relation("OrderProduct", fields: [productId], references: [id])
+  productId String
+  order OrderItem? @relation(references: [orderId], fields: [id], onDelete: Cascade)
+  orderId String
 }
 
 
@@ -90,7 +93,15 @@ model OrderItem {
   orderId String @unique
  status OrderStatus @relation(fields: [statusId], references: [id]) 
  statusId String
-  items Product[]
+  items OrderProduct[]
+}
+
+
+model Order{
+  id String @id @default(uuid())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String 
+  orderItems OrderItem[] @relation("OrderItems")
 }
 
 
