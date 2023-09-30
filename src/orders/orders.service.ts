@@ -17,20 +17,13 @@ export class OrdersService {
     const { orderedProductsDetails, totalOrderCost } =
       await this.getCartDetails(userId);
 
-    // const orderedProductsIDs = orderedProductsDetails.map((product) => ({
-    //   id: product.productId,
-    // }));
-
     const orderStatus = await this.prisma.orderStatus.findFirstOrThrow({
       where: {
-        title: 'pending',
+        title: 'processing',
       },
     });
 
-    // const orderProducts = await this.prisma.orderProduct.createMany({
-    //   data:[...orderedProductsDetails]
-    // })
-
+    // create order
     const order = await this.prisma.orderItem.create({
       data: {
         total: totalOrderCost,
@@ -42,7 +35,6 @@ export class OrdersService {
 
         items: {
           create: [...orderedProductsDetails],
-          //  create:
         },
 
         order: {
@@ -54,12 +46,18 @@ export class OrdersService {
         },
       },
     });
+    // update product inventory
+    for (const item of orderedProductsDetails) {
+      await this.productService.updateProduct(item.productId, {
+        quantity: item.productQty - item.quantity,
+      });
+    }
 
     return { message: 'order created successfully', order };
   }
 
   async deleteOrder(orderId: string) {
-    const order = await this.prisma.order.delete({
+    await this.prisma.order.delete({
       where: {
         id: orderId,
       },
@@ -121,6 +119,7 @@ export class OrdersService {
       productId: string;
       price: number;
       quantity: number;
+      productQty: number;
     }[] = [];
 
     for (const cartItem of cart.cartItems) {
@@ -132,17 +131,13 @@ export class OrdersService {
         throw new NotFoundException('sorry!. product is sold out!!');
       }
 
-      const updatedProduct = await this.productService.updateProduct(
-        cartItem.productId,
-        { quantity: product.quantity - cartItem.quantity },
-      );
-
       const costOfOrderItem = cartItem.quantity * cartItem.price;
       totalOrderCost += costOfOrderItem;
       orderedProductsDetails.push({
         productId: cartItem.productId,
         price: cartItem.price,
         quantity: cartItem.quantity,
+        productQty: product?.quantity,
       });
     }
 

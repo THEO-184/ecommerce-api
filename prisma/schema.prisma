@@ -127,7 +127,7 @@ model OrderProduct {
 
 model OrderStatus {
   id String @id @default(uuid())
-  title OrderStatusEnum @unique @default(pending)
+  title OrderStatusEnum @unique @default(processing)
   description String
   orderItems OrderItem[]
     updatedAt DateTime @updatedAt
@@ -142,7 +142,7 @@ enum CategoryEnum {
 }
 
 enum OrderStatusEnum {
-  pending
+  processing
   delivered
   cancelled
 }

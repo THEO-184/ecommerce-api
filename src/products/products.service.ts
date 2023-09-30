@@ -123,6 +123,9 @@ export class ProductsService {
         id: {
           in: [...IDs],
         },
+        quantity: {
+          gt: 0,
+        },
       },
     });
     return products;

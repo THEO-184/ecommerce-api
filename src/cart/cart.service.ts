@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CartItemDto } from './dto/cart.dto';
 import { ProductsService } from 'src/products/products.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CartService {
@@ -16,13 +17,13 @@ export class CartService {
       userId,
     );
 
-    if (payload.quantity > existingCartItem?.product?.quantity) {
-      throw new BadRequestException(
-        'insufficient products for the requested quantity',
-      );
-    }
-
     if (existingCartItem) {
+      if (payload.quantity >= existingCartItem?.product?.quantity) {
+        throw new BadRequestException(
+          'insufficient products for the requested quantity',
+        );
+      }
+
       await this.prisma.shoppingCartItem.update({
         where: {
           id: existingCartItem.id,
@@ -45,6 +46,11 @@ export class CartService {
     }
 
     const product = await this.productService.getProduct(payload.productId);
+    if (payload.quantity >= product?.quantity) {
+      throw new BadRequestException(
+        'insufficient products for the requested quantity',
+      );
+    }
 
     const cartItem = await this.prisma.shoppingCartItem.create({
       data: {
@@ -110,12 +116,8 @@ export class CartService {
       where: {
         userId,
       },
+
       include: {
-        _count: {
-          select: {
-            cartItems: true,
-          },
-        },
         cartItems: {
           select: {
             id: true,
@@ -133,7 +135,12 @@ export class CartService {
       },
     });
 
-    return { data: cart };
+    const totalCost = cart.cartItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0,
+    );
+
+    return { cart: { totalCost, count: cart.cartItems.length, ...cart } };
   }
 
   async deleteCartItem(cartItemId: string, userId: string) {
