@@ -16,7 +16,7 @@ model User {
   password String 
   username String @db.VarChar(50)
   reviews Review[]
-  telephone String 
+  telephone String @unique @default("")
   cart Cart?
   orders Order[]
   updatedAt DateTime @updatedAt
