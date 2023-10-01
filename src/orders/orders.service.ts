@@ -34,7 +34,13 @@ export class OrdersService {
         },
 
         items: {
-          create: [...orderedProductsDetails],
+          create: [...orderedProductsDetails].map(
+            ({ price, productId, quantity }) => ({
+              price,
+              productId,
+              quantity,
+            }),
+          ),
         },
 
         order: {
@@ -56,20 +62,56 @@ export class OrdersService {
     return { message: 'order created successfully', order };
   }
 
-  async deleteOrder(orderId: string) {
-    await this.prisma.order.delete({
+  async cancelOrder(orderId: string, userId: string) {
+    const order = await this.prisma.order.delete({
       where: {
         id: orderId,
+        userId,
+      },
+      include: {
+        orderItems: {
+          select: {
+            id: true,
+            items: {
+              select: {
+                quantity: true,
+                product: {
+                  select: {
+                    id: true,
+                    quantity: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
+
+    const orderedProducts = order.orderItems.flatMap((item) => item.items);
+
+    // update product inventory
+    for (const orderProduct of orderedProducts) {
+      await this.productService.updateProduct(orderProduct.product.id, {
+        // add back the number of products that was deducted when user made order
+        quantity: orderProduct.product.quantity + orderProduct.quantity,
+      });
+    }
 
     return { message: 'order deleted successfully' };
   }
 
   async getOrder(userId: string) {
-    const order = await this.prisma.order.findFirstOrThrow({
+    const order = await this.prisma.order.findMany({
       where: {
         userId: userId,
+        orderItems: {
+          some: {
+            status: {
+              title: 'processing',
+            },
+          },
+        },
       },
 
       include: {

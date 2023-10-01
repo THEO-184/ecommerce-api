@@ -28,7 +28,7 @@ export class OrdersController {
   }
 
   @Delete(':id')
-  deleteOrder(@Param('id') id: string) {
-    return this.orderService.deleteOrder(id);
+  cancelOrder(@Param('id') orderId: string, @GetUser('sub') userId: string) {
+    return this.orderService.cancelOrder(orderId, userId);
   }
 }

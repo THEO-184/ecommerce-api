@@ -125,6 +125,7 @@ export class CartService {
             price: true,
             product: {
               select: {
+                id: true,
                 description: true,
                 image: true,
                 title: true,
