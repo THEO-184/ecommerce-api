@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+  import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CartItemDto } from './dto/cart.dto';
 import { ProductsService } from 'src/products/products.service';
@@ -11,7 +11,7 @@ export class CartService {
     private productService: ProductsService,
   ) {}
 
-  async addToCart(payload: CartItemDto, userId: string) {
+   async addToCart(payload: CartItemDto, userId: string) {
     const existingCartItem = await this.checkIsItemInCart(
       payload.productId,
       userId,

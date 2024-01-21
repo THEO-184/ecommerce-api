@@ -11,137 +11,127 @@ datasource db {
 }
 
 model User {
-  id String @id @default(uuid())
-  email String @unique
-  password String 
-  username String @db.VarChar(50)
-  reviews Review[]
-  telephone String @unique @default("")
-  cart Cart?
-  orders Order[]
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  username  String   @db.VarChar(50)
+  reviews   Review[]
+  telephone String   @unique @default("")
+  cart      Cart?
+  orders    Order[]
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
 
 model Product {
-  id String @id @default(uuid())
-  title String @db.VarChar(100)
-  description String @db.VarChar(500)
-  price Float @db.DoublePrecision()
-  quantity Int 
-  image String 
-  cartegory Category @relation(fields: [categoryId], references: [id])
-  categoryId String
-  reviews Review[] @relation("productReviews")
-  cartItems ShoppingCartItem[] @relation("productCartItems")
-  orderProducts OrderProduct[] @relation("OrderProduct")
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
-
+  id            String             @id @default(uuid())
+  title         String             @db.VarChar(100)
+  description   String             @db.VarChar(500)
+  price         Float              @db.DoublePrecision()
+  quantity      Int
+  image         String
+  cartegory     Category           @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  reviews       Review[]           @relation("productReviews")
+  cartItems     ShoppingCartItem[] @relation("productCartItems")
+  orderProducts OrderProduct[]     @relation("OrderProduct")
+  updatedAt     DateTime           @updatedAt
+  createdAt     DateTime           @default(now())
 }
 
 model Category {
-  id String @id @default(uuid())
-  title CategoryEnum @default(clothing) @unique
-  products Product[]
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  id        String       @id @default(uuid())
+  title     CategoryEnum @unique
+  products  Product[]
+  updatedAt DateTime     @updatedAt
+  createdAt DateTime     @default(now())
 }
 
-
 model Review {
-  id String @id @default(uuid())
-  description String @db.VarChar(200)
-  rating Int 
-  user User @relation(fields: [userId], references: [id])
-  userId String
-  product Product @relation("productReviews", fields: [productId], references: [id], onDelete: Cascade)
-  productId String
-    updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  description String   @db.VarChar(200)
+  rating      Int
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  product     Product  @relation("productReviews", fields: [productId], references: [id], onDelete: Cascade)
+  productId   String
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
 
   @@unique([userId, productId])
 }
 
 model Cart {
-  id String @id @default(uuid())
-  user User @relation(fields: [userId], references: [id])
-  userId String @unique
- cartItems ShoppingCartItem[] @relation("cartItems")
-   updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  id        String             @id @default(uuid())
+  user      User               @relation(fields: [userId], references: [id])
+  userId    String             @unique
+  cartItems ShoppingCartItem[] @relation("cartItems")
+  updatedAt DateTime           @updatedAt
+  createdAt DateTime           @default(now())
 }
 
 model ShoppingCartItem {
-  id String @id @default(uuid())
-  cart Cart @relation("cartItems",fields: [cartId], references: [id], onDelete: Cascade)
-  cartId String
-  quantity Int
-  price Float @db.DoublePrecision()
-  product Product @relation("productCartItems" ,fields: [productId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  cart      Cart     @relation("cartItems", fields: [cartId], references: [id], onDelete: Cascade)
+  cartId    String
+  quantity  Int
+  price     Float    @db.DoublePrecision()
+  product   Product  @relation("productCartItems", fields: [productId], references: [id], onDelete: Cascade)
   productId String
-    updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
-
 
   @@unique([cartId, productId])
 }
 
-
-
-model Order{
-  id String @id @default(uuid())
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String 
+model Order {
+  id         String      @id @default(uuid())
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
   orderItems OrderItem[] @relation("OrderItems")
-    updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  updatedAt  DateTime    @updatedAt
+  createdAt  DateTime    @default(now())
 }
 
 model OrderItem {
-  id String @id @default(uuid())
-  total Float @db.DoublePrecision()
-  order Order @relation("OrderItems",fields: [orderId], references: [id], onDelete: Cascade)
-  orderId String @unique
- status OrderStatus @relation(fields: [statusId], references: [id]) 
- statusId String
-  items OrderProduct[]
-    updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  id        String         @id @default(uuid())
+  total     Float          @db.DoublePrecision()
+  order     Order          @relation("OrderItems", fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String         @unique
+  status    OrderStatus    @relation(fields: [statusId], references: [id])
+  statusId  String
+  items     OrderProduct[]
+  updatedAt DateTime       @updatedAt
+  createdAt DateTime       @default(now())
 }
 
 model OrderProduct {
-  id String @id @default(uuid())
-  price Float @db.DoublePrecision()
-  quantity Int
-  product Product @relation("OrderProduct", fields: [productId], references: [id])
-  productId String
-  orderItem OrderItem @relation(fields: [orderItemId], references: [id],onDelete: Cascade)
-  orderItemId String @default("")
-    updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  id          String    @id @default(uuid())
+  price       Float     @db.DoublePrecision()
+  quantity    Int
+  product     Product   @relation("OrderProduct", fields: [productId], references: [id])
+  productId   String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  orderItemId String    @default("")
+  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
 }
-
-
-
 
 model OrderStatus {
-  id String @id @default(uuid())
-  title OrderStatusEnum @unique @default(processing)
+  id          String          @id @default(uuid())
+  title       OrderStatusEnum @unique @default(processing)
   description String
-  orderItems OrderItem[]
-    updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  orderItems  OrderItem[]
+  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime        @default(now())
 }
-
 
 enum CategoryEnum {
   jewelery
   electronics
   clothing
+  health_and_beauty
 }
-
-
 
 enum OrderStatusEnum {
   processing

@@ -157,7 +157,7 @@ export class OrdersService {
     );
 
     let totalOrderCost = 0;
-    let orderedProductsDetails: {
+    const orderedProductsDetails: {
       productId: string;
       price: number;
       quantity: number;

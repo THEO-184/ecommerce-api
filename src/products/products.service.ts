@@ -47,7 +47,7 @@ export class ProductsService {
       },
     });
 
-    let productsWithImgUrls = [
+    const productsWithImgUrls = [
       ...products.filter((product) => product.image.includes('https://')),
     ];
     const awsProducts = [

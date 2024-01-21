@@ -10,6 +10,7 @@ import { ProductsModule } from './products/products.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
 import { OrderStatusModule } from './order_status/order_status.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { OrderStatusModule } from './order_status/order_status.module';
     CartModule,
     OrdersModule,
     OrderStatusModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
