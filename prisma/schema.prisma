@@ -134,7 +134,9 @@ enum CategoryEnum {
 }
 
 enum OrderStatusEnum {
+  pending
   processing
+  shipped
   delivered
-  cancelled
+  canceled
 }

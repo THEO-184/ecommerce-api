@@ -12,6 +12,7 @@ import { Response } from 'express';
 @Catch()
 export class PrismaClientExceptionFilter<T> extends BaseExceptionFilter {
   catch(exception: T, host: ArgumentsHost) {
+    console.log('error', exception);
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
 

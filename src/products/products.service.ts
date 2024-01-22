@@ -36,6 +36,10 @@ export class ProductsService {
         },
       },
 
+      orderBy: {
+        updatedAt: 'desc',
+      },
+
       include: {
         cartegory: {
           select: {
@@ -67,7 +71,7 @@ export class ProductsService {
     return { count: productsWithImgUrls.length, data: productsWithImgUrls };
   }
 
-  async getProduct(id: string) {
+  async getProduct(id: string, s3: S3Client) {
     const product = await this.prisma.product.findUnique({
       where: {
         id: id,
@@ -93,6 +97,14 @@ export class ProductsService {
         },
       },
     });
+
+    const command = new GetObjectCommand({
+      Bucket: this.config.get('BUCKET_NAME'),
+      Key: product.image,
+    });
+
+    const url = await getSignedUrl(s3, command);
+    product.image = url;
 
     return product;
   }
@@ -138,6 +150,8 @@ export class ProductsService {
     fileName: string,
   ) {
     console.log('uploading product img to aws...');
+    console.log('file', file);
+    console.log('bucketName', bucketName);
 
     const buffer = await sharp(file.buffer)
       .resize({ height: 1920, width: 1080, fit: 'contain' })

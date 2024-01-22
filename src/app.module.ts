@@ -11,6 +11,7 @@ import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
 import { OrderStatusModule } from './order_status/order_status.module';
 import { CategoryModule } from './category/category.module';
+import { S3ServiceService } from './s3-service/s3-service.service';
 
 @Module({
   imports: [
@@ -32,6 +33,6 @@ import { CategoryModule } from './category/category.module';
     CategoryModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, S3ServiceService],
 })
 export class AppModule {}

@@ -3,8 +3,11 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Post,
   Put,
   UploadedFile,
@@ -17,6 +20,7 @@ import * as crypto from 'crypto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { S3Client } from '@aws-sdk/client-s3';
+import { S3ServiceService } from 'src/s3-service/s3-service.service';
 
 @Controller('products')
 export class ProductsController {
@@ -25,23 +29,26 @@ export class ProductsController {
 
   constructor(
     private productsService: ProductsService,
+    private s3Service: S3ServiceService,
     private config: ConfigService,
   ) {
     this.bucketName = this.config.get('BUCKET_NAME');
-    this.s3 = new S3Client({
-      credentials: {
-        accessKeyId: this.config.get('BUCKET_ACCESS_KEY'),
-        secretAccessKey: this.config.get('BUCKET_SECRET_ACCESS_KEY'),
-      },
-      region: this.config.get('BUCKET_REGION'),
-    });
+    this.s3 = this.s3Service.getS3Client();
   }
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   async createProduct(
     @Body() payload: Omit<ProductsDto, 'image'>,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1000 * 1024 }),
+          new FileTypeValidator({ fileType: 'image/jpeg' }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
     const randomFileName = crypto.randomBytes(32).toString('hex');
     await this.productsService.uploadProductImgToS3(
@@ -61,7 +68,7 @@ export class ProductsController {
 
   @Get(':id')
   getProduct(@Param('id') id: string) {
-    return this.productsService.getProduct(id);
+    return this.productsService.getProduct(id, this.s3);
   }
 
   @Delete(':id')

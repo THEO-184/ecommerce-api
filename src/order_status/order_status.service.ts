@@ -14,7 +14,7 @@ export class OrderStatusService {
         description: payload.description,
       },
     });
-    return { message: 'order successfully created', orderStatus };
+    return { message: 'order successfully created', data: orderStatus };
   }
 
   async getOrderStatus() {
@@ -26,6 +26,6 @@ export class OrderStatusService {
       },
     });
 
-    return { count: orderStatus.length, orderStatus };
+    return { count: orderStatus.length, data: orderStatus };
   }
 }

@@ -1,8 +1,9 @@
-  import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CartItemDto } from './dto/cart.dto';
 import { ProductsService } from 'src/products/products.service';
 import { Prisma } from '@prisma/client';
+import { S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class CartService {
@@ -11,51 +12,56 @@ export class CartService {
     private productService: ProductsService,
   ) {}
 
-   async addToCart(payload: CartItemDto, userId: string) {
+  async addToCart(payload: CartItemDto, userId: string, s3: S3Client) {
     const existingCartItem = await this.checkIsItemInCart(
       payload.productId,
       userId,
     );
 
     if (existingCartItem) {
-      if (payload.quantity >= existingCartItem?.product?.quantity) {
+      if (payload.quantity > existingCartItem?.product?.quantity) {
         throw new BadRequestException(
           'insufficient products for the requested quantity',
         );
       }
 
-      await this.prisma.shoppingCartItem.update({
-        where: {
-          id: existingCartItem.id,
-        },
-        data: {
-          quantity: payload.quantity,
-        },
-        include: {
-          product: {
-            select: {
-              id: true,
-              title: true,
-              quantity: true,
-            },
-          },
-        },
-      });
+      await this.updateCartItem(existingCartItem.id, payload.quantity);
 
-      return { message: 'cart successfully updated' };
+      return { message: 'cart  successfully updated' };
     }
 
-    const product = await this.productService.getProduct(payload.productId);
-    if (payload.quantity >= product?.quantity) {
+    const product = await this.productService.getProduct(payload.productId, s3);
+    if (payload.quantity > product?.quantity) {
       throw new BadRequestException(
         'insufficient products for the requested quantity',
       );
     }
 
+    const cartItem = await this.createCart(payload, userId, product.price);
+
+    return { data: cartItem, message: 'cart successfully created' };
+  }
+
+  private async updateCartItem(cartItemId: string, quantity: number) {
+    await this.prisma.shoppingCartItem.update({
+      where: {
+        id: cartItemId,
+      },
+      data: {
+        quantity,
+      },
+    });
+  }
+
+  private async createCart(
+    payload: CartItemDto,
+    userId: string,
+    price: number,
+  ) {
     const cartItem = await this.prisma.shoppingCartItem.create({
       data: {
         quantity: payload.quantity,
-        price: product.price,
+        price,
         cart: {
           connectOrCreate: {
             where: {
@@ -85,10 +91,10 @@ export class CartService {
       },
     });
 
-    return { data: cartItem, message: 'cart successfully created' };
+    return cartItem;
   }
 
-  async checkIsItemInCart(productId: string, userId: string) {
+  private async checkIsItemInCart(productId: string, userId: string) {
     const existingCartItem = await this.prisma.shoppingCartItem.findFirst({
       where: {
         cart: {
