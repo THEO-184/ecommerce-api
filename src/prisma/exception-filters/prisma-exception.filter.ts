@@ -12,7 +12,6 @@ import { Response } from 'express';
 @Catch()
 export class PrismaClientExceptionFilter<T> extends BaseExceptionFilter {
   catch(exception: T, host: ArgumentsHost) {
-    console.log('error', exception);
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
 
@@ -32,7 +31,7 @@ export class PrismaClientExceptionFilter<T> extends BaseExceptionFilter {
 
         case 'P2025': {
           res.status(HttpStatus.NOT_FOUND).json({
-            message: exception.meta?.cause,
+            message: exception.message,
             statusCode: HttpStatus.NOT_FOUND,
           });
           break;

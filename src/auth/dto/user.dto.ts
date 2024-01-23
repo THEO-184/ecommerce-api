@@ -11,7 +11,6 @@ import { OmitType } from '@nestjs/mapped-types';
 
 export class SignupDto {
   @IsEmail()
-  @IsNotEmpty()
   @Matches(/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/, {
     message: 'invalid email format',
   })
@@ -30,8 +29,8 @@ export class SignupDto {
   password: string;
 
   @IsString()
-  @Matches(/^\+233\d{9}$/, {
-    message: 'Invalid telephone format. Use +233xxxxxxxxx.',
+  @Matches(/^0[0-9]{9}$/, {
+    message: 'Invalid telephone format. Use 0xxxxxxxxx.',
   })
   telephone: string;
 }

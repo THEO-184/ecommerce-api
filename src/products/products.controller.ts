@@ -25,15 +25,12 @@ import { S3ServiceService } from 'src/s3-service/s3-service.service';
 @Controller('products')
 export class ProductsController {
   bucketName: string;
-  s3: S3Client;
 
   constructor(
     private productsService: ProductsService,
-    private s3Service: S3ServiceService,
     private config: ConfigService,
   ) {
     this.bucketName = this.config.get('BUCKET_NAME');
-    this.s3 = this.s3Service.getS3Client();
   }
 
   @Post()
@@ -52,7 +49,6 @@ export class ProductsController {
   ) {
     const randomFileName = crypto.randomBytes(32).toString('hex');
     await this.productsService.uploadProductImgToS3(
-      this.s3,
       file,
       this.bucketName,
       randomFileName,
@@ -63,12 +59,12 @@ export class ProductsController {
 
   @Get()
   getAllProducts() {
-    return this.productsService.getAllProducts(this.s3);
+    return this.productsService.getAllProducts();
   }
 
   @Get(':id')
   getProduct(@Param('id') id: string) {
-    return this.productsService.getProduct(id, this.s3);
+    return this.productsService.getProduct(id);
   }
 
   @Delete(':id')
