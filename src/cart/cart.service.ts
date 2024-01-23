@@ -2,17 +2,36 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CartItemDto } from './dto/cart.dto';
 import { ProductsService } from 'src/products/products.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { S3Client } from '@aws-sdk/client-s3';
+import { S3ServiceService } from 'src/s3-service/s3-service.service';
+
+export interface CartData {
+  id: string;
+  updatedAt: string;
+  createdAt: string;
+  userId: string;
+  cartItems: {
+    id: string;
+    quantity: number;
+    price: number;
+    subTotal: number;
+    product: { id: string; description: string; image: string; title: string };
+  }[];
+}
 
 @Injectable()
 export class CartService {
+  client;
   constructor(
     private prisma: PrismaService,
     private productService: ProductsService,
-  ) {}
+    private s3Service: S3ServiceService,
+  ) {
+    this.client = new PrismaClient();
+  }
 
-  async addToCart(payload: CartItemDto, userId: string, s3: S3Client) {
+  async addToCart(payload: CartItemDto, userId: string) {
     const existingCartItem = await this.checkIsItemInCart(
       payload.productId,
       userId,
@@ -27,10 +46,10 @@ export class CartService {
 
       await this.updateCartItem(existingCartItem.id, payload.quantity);
 
-      return { message: 'cart  successfully updated' };
+      return { message: 'item added to cart' };
     }
 
-    const product = await this.productService.getProduct(payload.productId, s3);
+    const product = await this.productService.getProduct(payload.productId);
     if (payload.quantity > product?.quantity) {
       throw new BadRequestException(
         'insufficient products for the requested quantity',
@@ -39,7 +58,7 @@ export class CartService {
 
     const cartItem = await this.createCart(payload, userId, product.price);
 
-    return { data: cartItem, message: 'cart successfully created' };
+    return { data: cartItem, message: 'item added to cart' };
   }
 
   private async updateCartItem(cartItemId: string, quantity: number) {
@@ -118,36 +137,71 @@ export class CartService {
   }
 
   async getCartItems(userId: string) {
-    const cart = await this.prisma.cart.findUnique({
-      where: {
-        userId,
-      },
-
-      include: {
-        cartItems: {
-          select: {
-            id: true,
-            quantity: true,
-            price: true,
-            product: {
-              select: {
-                id: true,
-                description: true,
-                image: true,
-                title: true,
+    const cart = await this.prisma
+      .$extends({
+        result: {
+          shoppingCartItem: {
+            subTotal: {
+              needs: { quantity: true, price: true },
+              compute(item) {
+                return item.price * item.quantity;
               },
             },
           },
         },
-      },
-    });
+      })
+      .$extends({
+        result: {
+          cart: {
+            calculateCost: {
+              needs: {},
+              compute(data) {
+                const cart = data as unknown as CartData;
+                console.log('cart 1', data);
+                return cart.cartItems.reduce(
+                  (sum, cur) => sum + cur.subTotal,
+                  0,
+                );
+              },
+            },
+          },
+        },
+      })
+      .cart.findUnique({
+        where: {
+          userId,
+        },
 
-    const totalCost = cart.cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0,
-    );
+        include: {
+          cartItems: {
+            select: {
+              id: true,
+              subTotal: true,
+              quantity: true,
+              price: true,
+              product: {
+                select: {
+                  id: true,
+                  description: true,
+                  image: true,
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+      });
 
-    return { cart: { totalCost, count: cart.cartItems.length, ...cart } };
+    if (!cart) {
+      return { cart: {} };
+    }
+
+    const cartItems = await this.s3Service.getAWSProducts(cart.cartItems);
+    cart.cartItems = cartItems;
+
+    const totalCost = cart.calculateCost;
+
+    return { data: { totalCost, count: cart.cartItems.length, ...cart } };
   }
 
   async deleteCartItem(cartItemId: string, userId: string) {

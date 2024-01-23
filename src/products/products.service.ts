@@ -9,10 +9,18 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import * as sharp from 'sharp';
 import { ConfigService } from '@nestjs/config';
+import { S3ServiceService } from 'src/s3-service/s3-service.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService, private config: ConfigService) {}
+  s3: S3Client;
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService,
+    private s3Service: S3ServiceService,
+  ) {
+    this.s3 = this.s3Service.getS3Client();
+  }
 
   async createProduct(payload: Omit<ProductsDto, 'image'>, productImg: string) {
     const productPayload = {
@@ -28,7 +36,7 @@ export class ProductsService {
     return { product, message: 'Product created successfully ' };
   }
 
-  async getAllProducts(s3: S3Client) {
+  async getAllProducts() {
     const products = await this.prisma.product.findMany({
       where: {
         quantity: {
@@ -51,27 +59,12 @@ export class ProductsService {
       },
     });
 
-    const productsWithImgUrls = [
-      ...products.filter((product) => product.image.includes('https://')),
-    ];
-    const awsProducts = [
-      ...products.filter((product) => !product.image.includes('https://')),
-    ];
-
-    for (const product of awsProducts) {
-      const command = new GetObjectCommand({
-        Bucket: this.config.get('BUCKET_NAME'),
-        Key: product.image,
-      });
-      const url = await getSignedUrl(s3, command);
-      product.image = url;
-      productsWithImgUrls.push(product);
-    }
+    const productsWithImgUrls = await this.s3Service.getAWSProducts(products);
 
     return { count: productsWithImgUrls.length, data: productsWithImgUrls };
   }
 
-  async getProduct(id: string, s3: S3Client) {
+  async getProduct(id: string) {
     const product = await this.prisma.product.findUnique({
       where: {
         id: id,
@@ -103,7 +96,7 @@ export class ProductsService {
       Key: product.image,
     });
 
-    const url = await getSignedUrl(s3, command);
+    const url = await getSignedUrl(this.s3, command);
     product.image = url;
 
     return product;
@@ -144,7 +137,6 @@ export class ProductsService {
   }
 
   async uploadProductImgToS3(
-    s3: S3Client,
     file: Express.Multer.File,
     bucketName: string,
     fileName: string,
@@ -163,7 +155,7 @@ export class ProductsService {
       ContentType: file.mimetype,
     });
 
-    await s3.send(command);
+    await this.s3.send(command);
     console.log('uploaded..');
   }
 }
