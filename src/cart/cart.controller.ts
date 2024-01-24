@@ -36,4 +36,9 @@ export class CartController {
   addToCart(@Body() payload: CartItemDto, @GetUser('sub') id: string) {
     return this.cartService.addToCart(payload, id);
   }
+
+  @Delete(':id')
+  clearCart(@Param('id') id: string, @GetUser('sub') userId: string) {
+    return this.cartService.clearCart(id, userId);
+  }
 }

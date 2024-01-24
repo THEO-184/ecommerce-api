@@ -237,4 +237,23 @@ export class CartService {
 
     return cart;
   }
+
+  async clearCart(cartId: string, userId: string) {
+    const cartItems = await this.prisma.shoppingCartItem.deleteMany({
+      where: {
+        cart: {
+          id: cartId,
+          userId,
+        },
+      },
+    });
+
+    const cart = await this.prisma.cart.delete({
+      where: {
+        id: cartId,
+      },
+    });
+
+    return { message: 'cart successfully deleted', cartItems, cart };
+  }
 }
