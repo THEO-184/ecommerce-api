@@ -239,7 +239,7 @@ export class CartService {
   }
 
   async clearCart(cartId: string, userId: string) {
-    const cartItems = await this.prisma.shoppingCartItem.deleteMany({
+    const deleteItems = this.prisma.shoppingCartItem.deleteMany({
       where: {
         cart: {
           id: cartId,
@@ -248,12 +248,14 @@ export class CartService {
       },
     });
 
-    const cart = await this.prisma.cart.delete({
+    const deleteCart = this.prisma.cart.delete({
       where: {
         id: cartId,
       },
     });
 
-    return { message: 'cart successfully deleted', cartItems, cart };
+    await this.prisma.$transaction([deleteItems, deleteCart]);
+
+    return { message: 'cart successfully deleted' };
   }
 }
