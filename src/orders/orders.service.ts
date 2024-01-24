@@ -4,6 +4,7 @@ import { OrderDto } from './dto/order.dto';
 import { CartService } from 'src/cart/cart.service';
 import { Prisma } from '@prisma/client';
 import { ProductsService } from 'src/products/products.service';
+import { UpdateProductDto } from 'src/products/dto/products.dto';
 
 @Injectable()
 export class OrdersService {
@@ -14,19 +15,18 @@ export class OrdersService {
   ) {}
 
   async createOrder(userId: string) {
-    const { orderedProductsDetails, totalOrderCost } =
-      await this.getCartDetails(userId);
+    const data = await this.getCartDetails(userId);
 
     const orderStatus = await this.prisma.orderStatus.findFirstOrThrow({
       where: {
-        title: 'processing',
+        title: 'pending',
       },
     });
 
     // create order
-    const order = await this.prisma.orderItem.create({
+    const order = this.prisma.orderItem.create({
       data: {
-        total: totalOrderCost,
+        total: data.totalCost,
         status: {
           connect: {
             id: orderStatus.id,
@@ -34,10 +34,10 @@ export class OrdersService {
         },
 
         items: {
-          create: [...orderedProductsDetails].map(
-            ({ price, productId, quantity }) => ({
+          create: data.cartItems.map(
+            ({ price, product: { id }, quantity }) => ({
               price,
-              productId,
+              productId: id,
               quantity,
             }),
           ),
@@ -52,14 +52,32 @@ export class OrdersService {
         },
       },
     });
+
+    const updateProductQueries: any[] = [order];
     // update product inventory
-    for (const item of orderedProductsDetails) {
-      await this.productService.updateProduct(item.productId, {
-        quantity: item.productQty - item.quantity,
+    for (const item of data.cartItems) {
+      const query = this.updateProduct(item.product.id, {
+        quantity: item.quantity,
       });
+      updateProductQueries.push(query);
     }
 
-    return { message: 'order created successfully', order };
+    const transactions = await this.prisma.$transaction(updateProductQueries);
+
+    return { message: 'order created successfully', transactions };
+  }
+
+  private updateProduct(id: string, payload: UpdateProductDto) {
+    return this.prisma.product.update({
+      where: {
+        id,
+      },
+      data: {
+        quantity: {
+          decrement: payload.quantity,
+        },
+      },
+    });
   }
 
   async cancelOrder(orderId: string, userId: string) {
@@ -149,40 +167,22 @@ export class OrdersService {
     return { data: order };
   }
 
-  async getCartDetails(userId: string) {
-    const cart = await this.cartService.getUserCart(userId);
-    const cartItemIds = cart.cartItems.map((cart) => cart.productId);
-    const cartProducts = await this.productService.getProductsByIds(
-      cartItemIds,
-    );
+  private async getCartDetails(userId: string) {
+    const { data } = await this.cartService.getCartItems(userId);
 
-    let totalOrderCost = 0;
-    const orderedProductsDetails: {
-      productId: string;
-      price: number;
-      quantity: number;
-      productQty: number;
-    }[] = [];
-
-    for (const cartItem of cart.cartItems) {
-      const product = cartProducts.find(
-        (product) => product.id === cartItem.productId,
-      );
-
-      if (!product) {
-        throw new NotFoundException('sorry!. product is sold out!!');
+    for (const item of data.cartItems) {
+      if (item.quantity > item.product.quantity) {
+        throw new NotFoundException(
+          `sorry!. Only ${item.product.quantity} of ${item.product.title} are in stock!.`,
+        );
       }
-
-      const costOfOrderItem = cartItem.quantity * cartItem.price;
-      totalOrderCost += costOfOrderItem;
-      orderedProductsDetails.push({
-        productId: cartItem.productId,
-        price: cartItem.price,
-        quantity: cartItem.quantity,
-        productQty: product?.quantity,
-      });
+      if (!item.product.quantity) {
+        throw new NotFoundException(
+          `sorry!. ${item.product.title} has been sold out`,
+        );
+      }
     }
 
-    return { totalOrderCost, orderedProductsDetails };
+    return data;
   }
 }

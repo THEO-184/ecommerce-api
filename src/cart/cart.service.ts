@@ -177,14 +177,7 @@ export class CartService {
               subTotal: true,
               quantity: true,
               price: true,
-              product: {
-                select: {
-                  id: true,
-                  description: true,
-                  image: true,
-                  title: true,
-                },
-              },
+              product: true,
             },
           },
         },
