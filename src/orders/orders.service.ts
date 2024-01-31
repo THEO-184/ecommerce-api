@@ -123,13 +123,6 @@ export class OrdersService {
     const order = await this.prisma.order.findMany({
       where: {
         userId: userId,
-        orderItems: {
-          some: {
-            status: {
-              title: 'processing',
-            },
-          },
-        },
       },
 
       include: {
