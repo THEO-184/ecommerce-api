@@ -12,6 +12,7 @@ import { OrdersModule } from './orders/orders.module';
 import { OrderStatusModule } from './order_status/order_status.module';
 import { CategoryModule } from './category/category.module';
 import { S3ServiceService } from './s3-service/s3-service.service';
+import { StripeModule } from './stripe/stripe.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { S3ServiceService } from './s3-service/s3-service.service';
     OrdersModule,
     OrderStatusModule,
     CategoryModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [AppService, S3ServiceService],
