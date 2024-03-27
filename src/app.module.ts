@@ -12,13 +12,17 @@ import { OrdersModule } from './orders/orders.module';
 import { OrderStatusModule } from './order_status/order_status.module';
 import { CategoryModule } from './category/category.module';
 import { S3ServiceService } from './s3-service/s3-service.service';
-import { StripeModule } from './stripe/stripe.module';
+import { StripeModule as NestjsStripeModule } from 'nestjs-stripe';
 
 @Module({
   imports: [
     UserModule,
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    NestjsStripeModule.forRoot({
+      apiKey: process.env.STRIPE_ACCESS_KEY,
+      apiVersion: '2023-10-16',
     }),
     JwtModule.register({
       global: true,
@@ -32,7 +36,6 @@ import { StripeModule } from './stripe/stripe.module';
     OrdersModule,
     OrderStatusModule,
     CategoryModule,
-    StripeModule,
   ],
   controllers: [AppController],
   providers: [AppService, S3ServiceService],

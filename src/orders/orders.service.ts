@@ -1,18 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  NotImplementedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { OrderDto } from './dto/order.dto';
 import { CartService } from 'src/cart/cart.service';
-import { Prisma } from '@prisma/client';
 import { ProductsService } from 'src/products/products.service';
 import { UpdateProductDto } from 'src/products/dto/products.dto';
+import { InjectStripe } from 'nestjs-stripe';
+import Stripe from 'stripe';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OrdersService {
   constructor(
+    @InjectStripe() private readonly stripeClient: Stripe,
     private prisma: PrismaService,
     private cartService: CartService,
     private productService: ProductsService,
-  ) {}
+    private config: ConfigService,
+  ) {
+    this.stripeClient = new Stripe(
+      this.config.getOrThrow('STRIPE_ACCESS_KEY'),
+      {
+        typescript: true,
+      },
+    );
+  }
 
   async createOrder(userId: string) {
     const data = await this.getCartDetails(userId);
@@ -62,9 +76,25 @@ export class OrdersService {
       updateProductQueries.push(query);
     }
 
-    const transactions = await this.prisma.$transaction(updateProductQueries);
+    // updateProductQueries.push(this.stripeCheckout);
+    let paymentIntent;
+    let orderId = '';
+    let paymentError;
+    let success = false;
+    try {
+      paymentIntent = await this.stripeCheckout(data.totalCost);
+      if (!paymentIntent) {
+        throw new NotImplementedException();
+      }
+      const transactions = await this.prisma.$transaction(updateProductQueries);
+      orderId = transactions[0].id;
+      success = true;
+    } catch (error) {
+      console.log('error', error);
+      paymentError = `Transaction Failed` + error.message;
+    }
 
-    return { message: 'order created successfully', transactions };
+    return { success, orderId, paymentIntent, paymentError };
   }
 
   private updateProduct(id: string, payload: UpdateProductDto) {
@@ -177,5 +207,14 @@ export class OrdersService {
     }
 
     return data;
+  }
+
+  private stripeCheckout(totalCost: number) {
+    const amountInCents = Math.round(totalCost * 100);
+    return this.stripeClient.paymentIntents.create({
+      amount: amountInCents,
+      currency: 'usd',
+      metadata: { integration_check: 'accept_a_payment' },
+    });
   }
 }
