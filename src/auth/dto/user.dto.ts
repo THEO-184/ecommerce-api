@@ -1,6 +1,8 @@
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Length,
   Matches,
@@ -8,6 +10,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { OmitType } from '@nestjs/mapped-types';
+import { UserEnum } from '@prisma/client';
 
 export class SignupDto {
   @IsEmail()
@@ -33,9 +36,14 @@ export class SignupDto {
     message: 'Invalid telephone format. Use 0xxxxxxxxx.',
   })
   telephone: string;
+
+  @IsEnum(UserEnum, { message: 'not a valid user type' })
+  @IsOptional()
+  type: UserEnum;
 }
 
 export class LoginDto extends OmitType(SignupDto, [
   'username',
   'telephone',
+  'type',
 ] as const) {}

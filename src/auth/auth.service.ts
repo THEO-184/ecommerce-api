@@ -50,6 +50,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       username: user.username,
+      type: user.type,
     };
 
     const token = this.createToken(userPayload);

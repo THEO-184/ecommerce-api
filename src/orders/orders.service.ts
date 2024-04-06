@@ -190,6 +190,22 @@ export class OrdersService {
     return { data: order };
   }
 
+  async updateOrderStatus(orderId: string, orderStatusId: string) {
+    console.log('orderStatusId', orderStatusId);
+    await this.prisma.orderItem.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: {
+          connect: { id: orderStatusId },
+        },
+      },
+    });
+
+    return { message: 'order status updated successfully' };
+  }
+
   private async getCartDetails(userId: string) {
     const { data } = await this.cartService.getCartItems(userId);
 

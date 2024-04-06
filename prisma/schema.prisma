@@ -15,6 +15,7 @@ model User {
   email     String   @unique
   password  String
   username  String   @db.VarChar(50)
+  type      UserEnum @default(customer)
   reviews   Review[]
   telephone String   @unique
   cart      Cart?
@@ -119,7 +120,7 @@ model OrderProduct {
 
 model OrderStatus {
   id          String          @id @default(uuid())
-  title       OrderStatusEnum @unique @default(processing)
+  title       OrderStatusEnum @default(processing)
   description String
   orderItems  OrderItem[]
   updatedAt   DateTime        @updatedAt
@@ -139,4 +140,9 @@ enum OrderStatusEnum {
   shipped
   delivered
   canceled
+}
+
+enum UserEnum {
+  customer
+  admin
 }

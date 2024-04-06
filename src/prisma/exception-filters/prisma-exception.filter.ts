@@ -1,6 +1,7 @@
 import {
   ArgumentsHost,
   Catch,
+  ForbiddenException,
   HttpStatus,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,6 +15,8 @@ export class PrismaClientExceptionFilter<T> extends BaseExceptionFilter {
   catch(exception: T, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
+
+    console.log('exception', exception);
 
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       switch (exception.code) {
@@ -31,7 +34,7 @@ export class PrismaClientExceptionFilter<T> extends BaseExceptionFilter {
 
         case 'P2025': {
           res.status(HttpStatus.NOT_FOUND).json({
-            message: exception.message,
+            message: exception.meta?.cause || exception.message,
             statusCode: HttpStatus.NOT_FOUND,
           });
           break;
@@ -59,6 +62,11 @@ export class PrismaClientExceptionFilter<T> extends BaseExceptionFilter {
       res.status(HttpStatus.NOT_FOUND).json({
         statusCode: HttpStatus.NOT_FOUND,
         message: exception.message,
+      });
+    } else if (exception instanceof ForbiddenException) {
+      res.status(HttpStatus.FORBIDDEN).json({
+        statusCode: HttpStatus.FORBIDDEN,
+        message: 'you are unauthorized to access this resource',
       });
     } else {
       super.catch(exception, host);

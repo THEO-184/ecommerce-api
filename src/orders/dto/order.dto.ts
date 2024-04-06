@@ -5,3 +5,9 @@ export class OrderDto {
   @IsNotEmpty()
   cartId: never;
 }
+
+export class UpdateOrderStatusDto {
+  @IsString()
+  @IsNotEmpty()
+  orderStatusId: string;
+}
