@@ -15,6 +15,7 @@ import GetUser from 'src/auth/decorators/user.decorator';
 import { UserEnum } from '@prisma/client';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { IJwtPayload } from 'src/auth/interfaces';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('orders')
@@ -27,8 +28,8 @@ export class OrdersController {
   }
 
   @Post()
-  createOrder(@GetUser('sub') userId: string) {
-    return this.orderService.createOrder(userId);
+  createOrder(@GetUser() user: IJwtPayload) {
+    return this.orderService.createOrder(user);
   }
 
   @Delete(':id')

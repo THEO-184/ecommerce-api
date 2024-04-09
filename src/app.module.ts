@@ -11,12 +11,20 @@ import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
 import { OrderStatusModule } from './order_status/order_status.module';
 import { CategoryModule } from './category/category.module';
-import { S3ServiceService } from './s3-service/s3-service.service';
+import { S3ServiceService } from './aws-services/s3-service.service';
 import { StripeModule as NestjsStripeModule } from 'nestjs-stripe';
+
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { EmailModule } from './email/email.module';
+import { TypedEventEmitterModule } from './event-emitter/event-emitter.module';
+import { SeSServiceService } from './aws-services/ses-service/ses-service.service';
 
 @Module({
   imports: [
     UserModule,
+    EmailModule,
+    EventEmitterModule.forRoot(),
+    TypedEventEmitterModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -29,6 +37,7 @@ import { StripeModule as NestjsStripeModule } from 'nestjs-stripe';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
     }),
+
     PrismaModule,
     AuthModule,
     ProductsModule,
@@ -38,6 +47,6 @@ import { StripeModule as NestjsStripeModule } from 'nestjs-stripe';
     CategoryModule,
   ],
   controllers: [AppController],
-  providers: [AppService, S3ServiceService],
+  providers: [AppService, S3ServiceService, SeSServiceService],
 })
 export class AppModule {}

@@ -3,7 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CartItemDto } from './dto/cart.dto';
 import { ProductsService } from 'src/products/products.service';
 import { PrismaClient } from '@prisma/client';
-import { S3ServiceService } from 'src/s3-service/s3-service.service';
+import { S3ServiceService } from 'src/aws-services/s3-service.service';
 
 export interface CartData {
   id: string;

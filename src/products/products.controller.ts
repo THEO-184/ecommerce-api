@@ -20,7 +20,7 @@ import * as crypto from 'crypto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { S3Client } from '@aws-sdk/client-s3';
-import { S3ServiceService } from 'src/s3-service/s3-service.service';
+import { S3ServiceService } from 'src/aws-services/s3-service.service';
 
 @Controller('products')
 export class ProductsController {

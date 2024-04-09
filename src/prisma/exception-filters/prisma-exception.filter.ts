@@ -16,8 +16,6 @@ export class PrismaClientExceptionFilter<T> extends BaseExceptionFilter {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
 
-    console.log('exception', exception);
-
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       switch (exception.code) {
         case 'P2002': {

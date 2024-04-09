@@ -10,11 +10,14 @@ import { UpdateProductDto } from 'src/products/dto/products.dto';
 import { InjectStripe } from 'nestjs-stripe';
 import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
+import { TypedEventEmitter } from 'src/event-emitter/event-emitter.service';
+import { IJwtPayload } from 'src/auth/interfaces';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectStripe() private readonly stripeClient: Stripe,
+    private readonly eventEmitter: TypedEventEmitter,
     private prisma: PrismaService,
     private cartService: CartService,
     private productService: ProductsService,
@@ -28,8 +31,8 @@ export class OrdersService {
     );
   }
 
-  async createOrder(userId: string) {
-    const data = await this.getCartDetails(userId);
+  async createOrder(user: IJwtPayload) {
+    const data = await this.getCartDetails(user.sub);
 
     const orderStatus = await this.prisma.orderStatus.findFirstOrThrow({
       where: {
@@ -60,7 +63,7 @@ export class OrdersService {
         order: {
           create: {
             user: {
-              connect: { id: userId },
+              connect: { id: user.sub },
             },
           },
         },
@@ -81,6 +84,7 @@ export class OrdersService {
     let orderId = '';
     let paymentError;
     let success = false;
+    let orderReponse;
     try {
       paymentIntent = await this.stripeCheckout(data.totalCost);
       if (!paymentIntent) {
@@ -89,12 +93,21 @@ export class OrdersService {
       const transactions = await this.prisma.$transaction(updateProductQueries);
       orderId = transactions[0].id;
       success = true;
+      if (orderId) {
+        orderReponse = this.eventEmitter.emit('order.create', {
+          name: user.username,
+          email: user.email,
+          subject: `Dear ${user.username}, Your Order details
+          `,
+          totalCost: data.totalCost.toString(),
+        });
+      }
     } catch (error) {
       console.log('error', error);
       paymentError = `Transaction Failed` + error.message;
     }
 
-    return { success, orderId, paymentIntent, paymentError };
+    return { success, orderId, paymentError, orderReponse };
   }
 
   private updateProduct(id: string, payload: UpdateProductDto) {
